@@ -8,6 +8,7 @@ from smach import StateMachine
 from smach_ros import SimpleActionState
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
+user = "pierril"
 lastBoxPosition = -1
 
 def ValidWaypointCheck((x,y),image):
@@ -311,7 +312,7 @@ if __name__ == '__main__':
 	cv2.namedWindow('Display_Window', cv2.WND_PROP_FULLSCREEN)
     	cv2.setWindowProperty('Display_Window', cv2.WND_PROP_AUTOSIZE, cv2.WINDOW_NORMAL)
 
-	myMap = cv2.imread("/home/pierril/GeneratedMaps/map5.pgm", cv2.IMREAD_GRAYSCALE)  # open map image
+	myMap = cv2.imread("/home/"+ user +"/GeneratedMaps/map5.pgm", cv2.IMREAD_GRAYSCALE)  # open map image
 
 	#Rotate map
 	rows, cols = myMap.shape
