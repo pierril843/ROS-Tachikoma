@@ -1,0 +1,5 @@
+roslaunch ridgeback_gazebo map5.launch 
+roslaunch ridgeback_navigation myamclmap5.launch 
+roslaunch ridgeback_viz view_robot.launch config:=localization
+python rosNodePublish.py 
+
