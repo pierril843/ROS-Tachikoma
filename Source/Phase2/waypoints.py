@@ -6,292 +6,294 @@ from smach import StateMachine
 from smach_ros import SimpleActionState
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
-def ValidWaypointCheck((x,y),image):
-    	leftXLimit = (y - 50)  # Box vertice based on given waypoint
-    	rightXLimit = (y + 50)  # Box vertice based on given waypoint
-    	topYLimit = (x - 50)  # Box vertice based on given waypoint
-    	bottomYLimit = (x + 50)  # Box vertice based on given waypoint
-    	totalPixelValue = 0
 
-    	for j in range((leftXLimit), (rightXLimit), 1):
-    		for i in range((bottomYLimit), (topYLimit), -1):  # loop over all columns
-    			totalPixelValue += image[j, i]  # grayscale image all pixel values are the same
-    			#image[j, i] = 0 #Debug tool to see what pixels are being checked
+class WaypointsClass():
+    def ValidWaypointCheck(self,(x,y),image):
+        	leftXLimit = (y - 50)  # Box vertice based on given waypoint
+        	rightXLimit = (y + 50)  # Box vertice based on given waypoint
+        	topYLimit = (x - 50)  # Box vertice based on given waypoint
+        	bottomYLimit = (x + 50)  # Box vertice based on given waypoint
+        	totalPixelValue = 0
 
-    	averagePixelValue = (totalPixelValue / 10000)
-    	if (averagePixelValue < 254): #needs to be tested
-    		#print ("Invalid Waypoint")
-    		return (1)
-    	#print  ("Valid Waypoint Found")
-    	return (0)
+        	for j in range((leftXLimit), (rightXLimit), 1):
+        		for i in range((bottomYLimit), (topYLimit), -1):  # loop over all columns
+        			totalPixelValue += image[j, i]  # grayscale image all pixel values are the same
+        			#image[j, i] = 0 #Debug tool to see what pixels are being checked
 
-def TopRightWaypoint(image):
+        	averagePixelValue = (totalPixelValue / 10000)
+        	if (averagePixelValue < 254): #needs to be tested
+        		#print ("Invalid Waypoint")
+        		return (1)
+        	#print  ("Valid Waypoint Found")
+        	return (0)
 
-    	distanceFromCenter = []
-    	validTopRightWaypoints = []
-    	imHeight, imWidth = image.shape
-    	index = -1
+    def TopRightWaypoint(self,image):
 
-    	#Loop all pixels in top right quadrant of image, save locations of valid waypoints
-    	for i in range(0,(imHeight/2 - 50),100):
-    		for j in range(imWidth/2,(imWidth - 50),100):
-    			#cv2.rectangle(image, (j - 50, i - 50), (j + 50, i + 50), 128, 1)
-    			if (ValidWaypointCheck((j,i), image) == 0):
-    				validTopRightWaypoints.append((j, i))
+        	distanceFromCenter = []
+        	validTopRightWaypoints = []
+        	imHeight, imWidth = image.shape
+        	index = -1
 
-    	#calculate distances from valid points to center
-    	for x in range(0, len(validTopRightWaypoints), 1):
-    		distanceFromCenter.append(math.sqrt(((imWidth/2 - validTopRightWaypoints[x][0]) ** 2) + ((imHeight/2 - validTopRightWaypoints[x][1]) ** 2)))  # calculate distance between waypoints
+        	#Loop all pixels in top right quadrant of image, save locations of valid waypoints
+        	for i in range(0,(imHeight/2 - 50),100):
+        		for j in range(imWidth/2,(imWidth - 50),100):
+        			#cv2.rectangle(image, (j - 50, i - 50), (j + 50, i + 50), 128, 1)
+        			if (self.ValidWaypointCheck((j,i), image) == 0):
+        				validTopRightWaypoints.append((j, i))
 
-    		# Find greatest distance in list
-    		if (distanceFromCenter):
-    			index, value = max(enumerate(distanceFromCenter), key=operator.itemgetter(1))
+        	#calculate distances from valid points to center
+        	for x in range(0, len(validTopRightWaypoints), 1):
+        		distanceFromCenter.append(math.sqrt(((imWidth/2 - validTopRightWaypoints[x][0]) ** 2) + ((imHeight/2 - validTopRightWaypoints[x][1]) ** 2)))  # calculate distance between waypoints
 
-    	if (index == -1):
-    		return(-1)
-    	return (validTopRightWaypoints[index])
+        		# Find greatest distance in list
+        		if (distanceFromCenter):
+        			index, value = max(enumerate(distanceFromCenter), key=operator.itemgetter(1))
 
-def BottomRightWaypoint(image):
+        	if (index == -1):
+        		return(-1)
+        	return (validTopRightWaypoints[index])
 
-    	distanceFromCenter = []
-    	validBottomRightWaypoints = []
-    	imHeight, imWidth = image.shape
-    	index = -1
+    def BottomRightWaypoint(self,image):
 
-    	# Loop all pixels in top right quadrant of image, save locations of valid waypoints
-    	for i in range(imHeight/2, (imHeight- 50), 100):
-    		for j in range(imWidth / 2, (imWidth - 50), 100):
-    			#cv2.rectangle(image, (j - 50, i - 50), (j + 50, i + 50), 128, 1)
-    			if (ValidWaypointCheck((j, i), image) == 0):
-    				validBottomRightWaypoints.append((j, i))
+        	distanceFromCenter = []
+        	validBottomRightWaypoints = []
+        	imHeight, imWidth = image.shape
+        	index = -1
 
-    				# calculate distances from valid points to center
-    	for x in range(0, len(validBottomRightWaypoints), 1):
-    		distanceFromCenter.append(math.sqrt(((imWidth / 2 - validBottomRightWaypoints[x][0]) ** 2) + ((imHeight / 2 - validBottomRightWaypoints[x][1]) ** 2)))  # calculate distance between waypoints
+        	# Loop all pixels in top right quadrant of image, save locations of valid waypoints
+        	for i in range(imHeight/2, (imHeight- 50), 100):
+        		for j in range(imWidth / 2, (imWidth - 50), 100):
+        			#cv2.rectangle(image, (j - 50, i - 50), (j + 50, i + 50), 128, 1)
+        			if (self.ValidWaypointCheck((j, i), image) == 0):
+        				validBottomRightWaypoints.append((j, i))
 
-    		# Find greatest distance in list
-    		if (distanceFromCenter):
-    			index, value = max(enumerate(distanceFromCenter), key=operator.itemgetter(1))
+        				# calculate distances from valid points to center
+        	for x in range(0, len(validBottomRightWaypoints), 1):
+        		distanceFromCenter.append(math.sqrt(((imWidth / 2 - validBottomRightWaypoints[x][0]) ** 2) + ((imHeight / 2 - validBottomRightWaypoints[x][1]) ** 2)))  # calculate distance between waypoints
 
-    	if (index == -1):
-    		return (-1)
-    	return (validBottomRightWaypoints[index])
+        		# Find greatest distance in list
+        		if (distanceFromCenter):
+        			index, value = max(enumerate(distanceFromCenter), key=operator.itemgetter(1))
 
-def BottomLeftWaypoint(image):
+        	if (index == -1):
+        		return (-1)
+        	return (validBottomRightWaypoints[index])
 
-    	distanceFromCenter = []
-    	validBottomLeftWaypoints = []
-    	imHeight, imWidth = image.shape
-    	index = -1
+    def BottomLeftWaypoint(self,image):
 
-    	# Loop all pixels in top right quadrant of image, save locations of valid waypoints
-    	for i in range(imHeight / 2, (imHeight - 50), 100):
-    		for j in range(0, (imWidth/2 - 50), 80):
-    			# cv2.rectangle(image, (j - 40, i - 40), (j + 40, i + 40), 128, 1)
-    			if (ValidWaypointCheck((j, i), image) == 0):
-    				validBottomLeftWaypoints.append((j, i))
+        	distanceFromCenter = []
+        	validBottomLeftWaypoints = []
+        	imHeight, imWidth = image.shape
+        	index = -1
 
-    			# calculate distances from valid points to center
-    	for x in range(0, len(validBottomLeftWaypoints), 1):
-    		distanceFromCenter.append(math.sqrt(((imWidth / 2 - validBottomLeftWaypoints[x][0]) ** 2) + ((imHeight / 2 - validBottomLeftWaypoints[x][1]) ** 2)))  # calculate distance between waypoints
+        	# Loop all pixels in top right quadrant of image, save locations of valid waypoints
+        	for i in range(imHeight / 2, (imHeight - 50), 100):
+        		for j in range(0, (imWidth/2 - 50), 80):
+        			# cv2.rectangle(image, (j - 40, i - 40), (j + 40, i + 40), 128, 1)
+        			if (self.ValidWaypointCheck((j, i), image) == 0):
+        				validBottomLeftWaypoints.append((j, i))
 
-    		# Find greatest distance in list
-    		if (distanceFromCenter):
-    			index, value = max(enumerate(distanceFromCenter), key=operator.itemgetter(1))
+        			# calculate distances from valid points to center
+        	for x in range(0, len(validBottomLeftWaypoints), 1):
+        		distanceFromCenter.append(math.sqrt(((imWidth / 2 - validBottomLeftWaypoints[x][0]) ** 2) + ((imHeight / 2 - validBottomLeftWaypoints[x][1]) ** 2)))  # calculate distance between waypoints
 
-    	if (index == -1):
-    		return (-1)
-    	return (validBottomLeftWaypoints[index])
+        		# Find greatest distance in list
+        		if (distanceFromCenter):
+        			index, value = max(enumerate(distanceFromCenter), key=operator.itemgetter(1))
 
-def TopLeftWaypoint(image):
+        	if (index == -1):
+        		return (-1)
+        	return (validBottomLeftWaypoints[index])
 
-    	distanceFromCenter = []
-    	validTopLeftWaypoints = []
-    	imHeight, imWidth = image.shape
-    	index = -1
+    def TopLeftWaypoint(self,image):
 
-    	# Loop all pixels in top right quadrant of image, save locations of valid waypoints
-    	for i in range(0, (imHeight/2 - 50), 100):
-    		for j in range(0, (imWidth/2 - 50), 100):
-    			#cv2.rectangle(image, (j - 40, i - 40), (j + 40, i + 40), 128, 1)
-    			if (ValidWaypointCheck((j, i), image) == 0):
-    				validTopLeftWaypoints.append((j, i))
+        	distanceFromCenter = []
+        	validTopLeftWaypoints = []
+        	imHeight, imWidth = image.shape
+        	index = -1
 
-    			# calculate distances from valid points to center
-    	for x in range(0, len(validTopLeftWaypoints), 1):
-    		distanceFromCenter.append(math.sqrt(((imWidth / 2 - validTopLeftWaypoints[x][0]) ** 2) + ((imHeight / 2 - validTopLeftWaypoints[x][1]) ** 2)))  # calculate distance between waypoints
+        	# Loop all pixels in top right quadrant of image, save locations of valid waypoints
+        	for i in range(0, (imHeight/2 - 50), 100):
+        		for j in range(0, (imWidth/2 - 50), 100):
+        			#cv2.rectangle(image, (j - 40, i - 40), (j + 40, i + 40), 128, 1)
+        			if (self.ValidWaypointCheck((j, i), image) == 0):
+        				validTopLeftWaypoints.append((j, i))
 
-    	# Find greatest distance in list
-    	if (distanceFromCenter):
-    		index, value = max(enumerate(distanceFromCenter), key=operator.itemgetter(1))
+        			# calculate distances from valid points to center
+        	for x in range(0, len(validTopLeftWaypoints), 1):
+        		distanceFromCenter.append(math.sqrt(((imWidth / 2 - validTopLeftWaypoints[x][0]) ** 2) + ((imHeight / 2 - validTopLeftWaypoints[x][1]) ** 2)))  # calculate distance between waypoints
 
-    	if (index == -1):
-    		return (-1)
-    	return (validTopLeftWaypoints[index])
+        	# Find greatest distance in list
+        	if (distanceFromCenter):
+        		index, value = max(enumerate(distanceFromCenter), key=operator.itemgetter(1))
 
-def FindTopWaypoints((topLeftCoord),(topRightCoord),image):
+        	if (index == -1):
+        		return (-1)
+        	return (validTopLeftWaypoints[index])
 
-    	imHeight, imWidth = image.shape
-    	validTopWaypoints = []
-    	topMapWidth = ((topRightCoord[0] + topLeftCoord[0]) / 2)
-    	greatestYValue = 0
-    	xCoord = topMapWidth
-    	#yOffset = ((topRightCoord[1]) / (topRightCoord[0] * slopeOfLine))
+    def FindTopWaypoints(self,(topLeftCoord),(topRightCoord),image):
 
-    	for y in range(0, imHeight/2 - 50, 100):
-    		#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
-    		if (ValidWaypointCheck((xCoord, y),image) == 0):
-    			validTopWaypoints.append((xCoord, y))
-    			#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
-    	#cv2.rectangle(image, (validTopWaypoints[0][0] - 40, validTopWaypoints[0][1] - 40), (validTopWaypoints[0][0] + 40, validTopWaypoints[0][1] + 40), 128, 1)
-    	if (validTopWaypoints):
-    		return(validTopWaypoints[0])
-    	return(-1)
+        	imHeight, imWidth = image.shape
+        	validTopWaypoints = []
+        	topMapWidth = ((topRightCoord[0] + topLeftCoord[0]) / 2)
+        	greatestYValue = 0
+        	xCoord = topMapWidth
+        	#yOffset = ((topRightCoord[1]) / (topRightCoord[0] * slopeOfLine))
 
-def FindBottomWaypoints((bottomLeftCoord),(bottomRightCoord),image):
+        	for y in range(0, imHeight/2 - 50, 100):
+        		#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
+        		if (self.ValidWaypointCheck((xCoord, y),image) == 0):
+        			validTopWaypoints.append((xCoord, y))
+        			#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
+        	#cv2.rectangle(image, (validTopWaypoints[0][0] - 40, validTopWaypoints[0][1] - 40), (validTopWaypoints[0][0] + 40, validTopWaypoints[0][1] + 40), 128, 1)
+        	if (validTopWaypoints):
+        		return(validTopWaypoints[0])
+        	return(-1)
 
-    	imHeight, imWidth = image.shape
-    	validBottomWaypoints = []
-    	bottomMapWidth = ((bottomRightCoord[0] + bottomLeftCoord[0]) / 2)
-    	xCoord = bottomMapWidth
+    def FindBottomWaypoints(self,(bottomLeftCoord),(bottomRightCoord),image):
 
-    	for y in range(imHeight/2, imHeight - 50, 100):
-    		#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
-    		if (ValidWaypointCheck((xCoord, y),image) == 0):
-    			validBottomWaypoints.append((xCoord, y))
-    			#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
-    	#cv2.rectangle(image, (validBottomWaypoints[-1][0] - 40, validBottomWaypoints[-1][1] - 40), (validBottomWaypoints[-1][0] + 40, validBottomWaypoints[-1][1] + 40), 128, 1)
-    	if (validBottomWaypoints):
-    		return(validBottomWaypoints[-1])
-    	return(-1)
+        	imHeight, imWidth = image.shape
+        	validBottomWaypoints = []
+        	bottomMapWidth = ((bottomRightCoord[0] + bottomLeftCoord[0]) / 2)
+        	xCoord = bottomMapWidth
 
-def FindRightWaypoints((bottomRightCoord),(topRightCoord),image):
+        	for y in range(imHeight/2, imHeight - 50, 100):
+        		#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
+        		if (self.ValidWaypointCheck((xCoord, y),image) == 0):
+        			validBottomWaypoints.append((xCoord, y))
+        			#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
+        	#cv2.rectangle(image, (validBottomWaypoints[-1][0] - 40, validBottomWaypoints[-1][1] - 40), (validBottomWaypoints[-1][0] + 40, validBottomWaypoints[-1][1] + 40), 128, 1)
+        	if (validBottomWaypoints):
+        		return(validBottomWaypoints[-1])
+        	return(-1)
 
-    	imHeight, imWidth = image.shape
-    	validRightWaypoints = []
-    	bottomMapWidth = ((bottomRightCoord[1] + topRightCoord[1]) / 2)
-    	yCoord = bottomMapWidth
+    def FindRightWaypoints(self,(bottomRightCoord),(topRightCoord),image):
 
-    	for x in range(imWidth/2, imWidth - 50, 100):
-    		#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
-    		if (ValidWaypointCheck((x, yCoord),image) == 0):
-    			validRightWaypoints.append((x, yCoord))
-    			#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
-    	#cv2.rectangle(image, (validRightWaypoints[-1][0] - 40, validRightWaypoints[-1][1] - 40), (validRightWaypoints[-1][0] + 40, validRightWaypoints[-1][1] + 40), 128, 1)
-    	if (validRightWaypoints):
-    		return(validRightWaypoints[-1])
-    	return (-1)
+        	imHeight, imWidth = image.shape
+        	validRightWaypoints = []
+        	bottomMapWidth = ((bottomRightCoord[1] + topRightCoord[1]) / 2)
+        	yCoord = bottomMapWidth
 
-def FindLeftWaypoints((bottomLeftCoord),(topLeftCoord),image):
+        	for x in range(imWidth/2, imWidth - 50, 100):
+        		#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
+        		if (self.ValidWaypointCheck((x, yCoord),image) == 0):
+        			validRightWaypoints.append((x, yCoord))
+        			#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
+        	#cv2.rectangle(image, (validRightWaypoints[-1][0] - 40, validRightWaypoints[-1][1] - 40), (validRightWaypoints[-1][0] + 40, validRightWaypoints[-1][1] + 40), 128, 1)
+        	if (validRightWaypoints):
+        		return(validRightWaypoints[-1])
+        	return (-1)
 
-    	imHeight, imWidth = image.shape
-    	validLeftWaypoints = []
-    	bottomMapWidth = ((bottomLeftCoord[1] + topLeftCoord[1]) / 2)
-    	yCoord = bottomMapWidth
+    def FindLeftWaypoints(self,(bottomLeftCoord),(topLeftCoord),image):
 
-    	for x in range(0, imWidth/2 - 50, 100):
-    		#cv2.rectangle(image, (x - 40, yCoord - 40), (x + 40, yCoord + 40),128, 1)
-    		if (ValidWaypointCheck((x, yCoord),image) == 0):
-    			validLeftWaypoints.append((x, yCoord))
-    			#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
-    	#cv2.rectangle(image, (validLeftWaypoints[0][0] - 40, validLeftWaypoints[0][1] - 40), (validLeftWaypoints[0][0] + 40, validLeftWaypoints[0][1] + 40), 128, 1)
-    	if (validLeftWaypoints):
-    		return(validLeftWaypoints[0])
-    	return(-1)
+        	imHeight, imWidth = image.shape
+        	validLeftWaypoints = []
+        	bottomMapWidth = ((bottomLeftCoord[1] + topLeftCoord[1]) / 2)
+        	yCoord = bottomMapWidth
 
-def DisplayPatrolPath(image, preferredWaypoints):
+        	for x in range(0, imWidth/2 - 50, 100):
+        		#cv2.rectangle(image, (x - 40, yCoord - 40), (x + 40, yCoord + 40),128, 1)
+        		if (self.ValidWaypointCheck((x, yCoord),image) == 0):
+        			validLeftWaypoints.append((x, yCoord))
+        			#cv2.rectangle(image, (xCoord - 40, y - 40), (xCoord + 40, y + 40),128, 1)
+        	#cv2.rectangle(image, (validLeftWaypoints[0][0] - 40, validLeftWaypoints[0][1] - 40), (validLeftWaypoints[0][0] + 40, validLeftWaypoints[0][1] + 40), 128, 1)
+        	if (validLeftWaypoints):
+        		return(validLeftWaypoints[0])
+        	return(-1)
 
-    	for i in range(0,len(preferredWaypoints),1):
-    		leftXLimit = (preferredWaypoints[i][0]- 50)  # Box vertice based on given waypoint
-    		rightXLimit = (preferredWaypoints[i][0] + 50)  # Box vertice based on given waypoint
-    		topYLimit = (preferredWaypoints[i][1] - 50)  # Box vertice based on given waypoint
-    		bottomYLimit = (preferredWaypoints[i][1] + 50)  # Box vertice based on given waypoint
-    		cv2.rectangle(image,(leftXLimit,topYLimit),(rightXLimit,bottomYLimit),0,1)
+    def DisplayPatrolPath(self,image, preferredWaypoints):
 
-def ConvertToWorldCoords(listOfWaypoints, image):
-    	imHeight, imWidth = image.shape
-    	convertedWaypoints = []
+        	for i in range(0,len(preferredWaypoints),1):
+        		leftXLimit = (preferredWaypoints[i][0]- 50)  # Box vertice based on given waypoint
+        		rightXLimit = (preferredWaypoints[i][0] + 50)  # Box vertice based on given waypoint
+        		topYLimit = (preferredWaypoints[i][1] - 50)  # Box vertice based on given waypoint
+        		bottomYLimit = (preferredWaypoints[i][1] + 50)  # Box vertice based on given waypoint
+        		cv2.rectangle(image,(leftXLimit,topYLimit),(rightXLimit,bottomYLimit),0,1)
 
-    	#currently hard coded but works well for test maps as they are all similar resolution
-    	for i in range(0, len(listOfWaypoints), 1):
-    		convertedWaypoints.append(((listOfWaypoints[i][0] * 0.0195) - 10, (listOfWaypoints[i][1] * 0.0195) - 20))
-    		#convertedWaypoints.append(((listOfWaypoints[i][0] * (imWidth/30)) - 10, (listOfWaypoints[i][1] * (imWidth/30)) - 20))
+    def ConvertToWorldCoords(self,listOfWaypoints, image):
+        	imHeight, imWidth = image.shape
+        	convertedWaypoints = []
 
-    	return (convertedWaypoints)
+        	#currently hard coded but works well for test maps as they are all similar resolution
+        	for i in range(0, len(listOfWaypoints), 1):
+        		convertedWaypoints.append(((listOfWaypoints[i][0] * 0.0195) - 10, (listOfWaypoints[i][1] * 0.0195) - 20))
+        		#convertedWaypoints.append(((listOfWaypoints[i][0] * (imWidth/30)) - 10, (listOfWaypoints[i][1] * (imWidth/30)) - 20))
 
-def PatrolStateMachine(listOfWaypoints):
-    	tempWaypoint = ()
-    	waypoints = []
-    	#convert waypoints to ros topic format
-    	#waypoints.append([str(0), (listOfWaypoints[-1][1],listOfWaypoints[-1][0]), (0.0, 0.0, 0.0, 1.0)])
-    	for i in range(0, len(listOfWaypoints), 1):
-    		tempWaypoint = (listOfWaypoints[i][1],listOfWaypoints[i][0])
-    		waypoints.append([str(i), tempWaypoint, (0.0, 0.0, 0.0, 1.0)])
+        	return (convertedWaypoints)
 
-    	#start state machine
-    	patrol = StateMachine(['succeeded', 'aborted', 'preempted'])
-    	with patrol:
-    		for i, w in enumerate(waypoints):
-    			goal_pose = MoveBaseGoal()
-    			goal_pose.target_pose.header.frame_id = 'map'
+    def PatrolStateMachine(self,listOfWaypoints):
+        	tempWaypoint = ()
+        	waypoints = []
+        	#convert waypoints to ros topic format
+        	#waypoints.append([str(0), (listOfWaypoints[-1][1],listOfWaypoints[-1][0]), (0.0, 0.0, 0.0, 1.0)])
+        	for i in range(0, len(listOfWaypoints), 1):
+        		tempWaypoint = (listOfWaypoints[i][1],listOfWaypoints[i][0])
+        		waypoints.append([str(i), tempWaypoint, (0.0, 0.0, 0.0, 1.0)])
 
-    			goal_pose.target_pose.pose.position.x = w[1][0]
-    			goal_pose.target_pose.pose.position.y = w[1][1]
-    			goal_pose.target_pose.pose.position.z = 0.0
+        	#start state machine
+        	patrol = StateMachine(['succeeded', 'aborted', 'preempted'])
+        	with patrol:
+        		for i, w in enumerate(waypoints):
+        			goal_pose = MoveBaseGoal()
+        			goal_pose.target_pose.header.frame_id = 'map'
 
-    			goal_pose.target_pose.pose.orientation.x = w[2][0]
-    			goal_pose.target_pose.pose.orientation.y = w[2][1]
-    			goal_pose.target_pose.pose.orientation.z = w[2][2]
-    			goal_pose.target_pose.pose.orientation.w = w[2][3]
+        			goal_pose.target_pose.pose.position.x = w[1][0]
+        			goal_pose.target_pose.pose.position.y = w[1][1]
+        			goal_pose.target_pose.pose.position.z = 0.0
 
-    			StateMachine.add(w[0],
-    							 SimpleActionState('move_base',
-    											   MoveBaseAction,
-    											   goal=goal_pose),
-    							 transitions={'succeeded': waypoints[(i + 1) % \
-    																 len(waypoints)][0]})
-    	patrol.execute()
+        			goal_pose.target_pose.pose.orientation.x = w[2][0]
+        			goal_pose.target_pose.pose.orientation.y = w[2][1]
+        			goal_pose.target_pose.pose.orientation.z = w[2][2]
+        			goal_pose.target_pose.pose.orientation.w = w[2][3]
 
-def CropImage(img,tol=0):
+        			StateMachine.add(w[0],
+        							 SimpleActionState('move_base',
+        											   MoveBaseAction,
+        											   goal=goal_pose),
+        							 transitions={'succeeded': waypoints[(i + 1) % \
+        																 len(waypoints)][0]})
+        	patrol.execute()
 
-    	#any pixel with a value greater than 253 become pure white
-    	_, thresh = cv2.threshold(img, 253, 255, cv2.THRESH_BINARY)
+    def ScaleWaypoints(self,dst,crop, thresh, patrolPath):
+        	minXDistance = 10000  # arbitrary
+        	maxYDistance = 10000
+        	dstHeight, dstWidth = dst.shape
+        	imgHeight, imgWidth = crop.shape
+        	scaledWaypoints = []
 
-    	#find pixels that have a non zero value
-    	mask = thresh>tol
+        	#detect edges in image
+        	edges = cv2.Canny(thresh, 0, 255)
+        	ans = []
+        	for y in range(0, edges.shape[0]):
+        		for x in range(0, edges.shape[1]):
+        			if edges[y, x] != 0:
+        				ans = ans + [[x, y]]
+        	ans = np.array(ans)
 
-    	#return cropped image
-    	return img[np.ix_(mask.any(1),mask.any(0))], thresh
+        	for i in range(0,len(ans),1):
+        		# find x coord closest to right edge of the image
+        		if (dstWidth - ans[i][0]) < minXDistance:
+        			minXDistance = dstWidth - ans[i][0]
+        			#print "xContour: %d",ans[i][0]
 
-def ScaleWaypoints(dst,crop, thresh, patrolPath):
-    	minXDistance = 10000  # arbitrary
-    	maxYDistance = 10000
-    	dstHeight, dstWidth = dst.shape
-    	imgHeight, imgWidth = crop.shape
-    	scaledWaypoints = []
+        		# find y coord closest to bottom edge of the image
+        		if (dstHeight - ans[i][1]) < maxYDistance:
+        			maxYDistance = dstHeight - ans[i][1]
+        			#print "yContour: %d",ans[i][1]
 
-    	#detect edges in image
-    	edges = cv2.Canny(thresh, 0, 255)
-    	ans = []
-    	for y in range(0, edges.shape[0]):
-    		for x in range(0, edges.shape[1]):
-    			if edges[y, x] != 0:
-    				ans = ans + [[x, y]]
-    	ans = np.array(ans)
+        	#use calculated distances to determine distance to scale waypoints
+        	for i in range(0, len(patrolPath), 1):
+        		scaledWaypoints.append((patrolPath[i][0] + (dstWidth - (minXDistance + imgWidth)), patrolPath[i][1] + (dstHeight - (maxYDistance + imgHeight)) )) #+20 is a current test
 
-    	for i in range(0,len(ans),1):
-    		# find x coord closest to right edge of the image
-    		if (dstWidth - ans[i][0]) < minXDistance:
-    			minXDistance = dstWidth - ans[i][0]
-    			#print "xContour: %d",ans[i][0]
+        	return scaledWaypoints
 
-    		# find y coord closest to bottom edge of the image
-    		if (dstHeight - ans[i][1]) < maxYDistance:
-    			maxYDistance = dstHeight - ans[i][1]
-    			#print "yContour: %d",ans[i][1]
+    def CropImage(self,img,tol=0):
 
-    	#use calculated distances to determine distance to scale waypoints
-    	for i in range(0, len(patrolPath), 1):
-    		scaledWaypoints.append((patrolPath[i][0] + (dstWidth - (minXDistance + imgWidth)), patrolPath[i][1] + (dstHeight - (maxYDistance + imgHeight)) )) #+20 is a current test
+        #any pixel with a value greater than 253 become pure white
+        _, thresh = cv2.threshold(img, 253, 255, cv2.THRESH_BINARY)
 
-    	return scaledWaypoints
+        #find pixels that have a non zero value
+        mask = thresh>tol
+
+        #return cropped image
+        return img[np.ix_(mask.any(1),mask.any(0))], thresh

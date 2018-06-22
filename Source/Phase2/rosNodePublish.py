@@ -11,6 +11,7 @@ if __name__ == '__main__':
 	convertedWaypoints = []
 	scaledWaypoints = []
 	TotalCoords = 0
+	patrol = waypoints.WaypointsClass()
 
 	rospy.init_node('patrol')
 
@@ -27,31 +28,31 @@ if __name__ == '__main__':
 
 	#crop map to isolate portion that is valid for pathing
 	print "[croping map]"
-	crop, thresh = waypoints.CropImage(dst)
+	crop, thresh = patrol.CropImage(dst)
 
 	#find corner coords
-	topRightCoord = waypoints.TopRightWaypoint(crop)
+	topRightCoord = patrol.TopRightWaypoint(crop)
 	if (topRightCoord != -1):
 		patrolPath.append(topRightCoord)
 		TotalCoords += 1
 	else:
 		print "[E] - Top Right Coord Not Added"
 
-	bottomRightCoord = waypoints.BottomRightWaypoint(crop)
+	bottomRightCoord = patrol.BottomRightWaypoint(crop)
 	if (bottomRightCoord != -1):
 	 	patrolPath.append(bottomRightCoord)
 		TotalCoords += 1
 	else:
 		print "[E] - Bottom Right Coord Not Added"
 
-	bottomLeftCoord = waypoints.BottomLeftWaypoint(crop)
+	bottomLeftCoord = patrol.BottomLeftWaypoint(crop)
 	if (bottomLeftCoord != -1):
 		patrolPath.append(bottomLeftCoord)
 		TotalCoords += 1
 	else:
 		print "[E] - Bottom Left Coord Not Added"
 
-	topLeftCoord = waypoints.TopLeftWaypoint(crop)
+	topLeftCoord = patrol.TopLeftWaypoint(crop)
 	if (topLeftCoord != -1):
 		patrolPath.append(topLeftCoord)
 		TotalCoords += 1
@@ -60,7 +61,7 @@ if __name__ == '__main__':
 
 	#find midpoint coords
 	if (topRightCoord != -1 and bottomRightCoord != -1):
-		rightCoord = waypoints.FindRightWaypoints((bottomRightCoord), (topRightCoord), crop)
+		rightCoord = patrol.FindRightWaypoints((bottomRightCoord), (topRightCoord), crop)
 		if (rightCoord != -1):
 			patrolPath[1:1] = [rightCoord]
 			TotalCoords += 1
@@ -70,7 +71,7 @@ if __name__ == '__main__':
 		print "[E] - Right Midpoints Coord Not Calculated, Dependency Missing"
 
 	if (bottomLeftCoord != -1 and bottomRightCoord != -1):
-		bottomCoord = waypoints.FindBottomWaypoints((bottomLeftCoord), (bottomRightCoord), crop)
+		bottomCoord = patrol.FindBottomWaypoints((bottomLeftCoord), (bottomRightCoord), crop)
 		if (bottomCoord != -1):
 			patrolPath[3:3] = [bottomCoord]
 			TotalCoords += 1
@@ -80,7 +81,7 @@ if __name__ == '__main__':
 		print "[E] - Bottom Midpoints Coord Not Calculated, Dependency Missing"
 
 	if (bottomLeftCoord != -1 and topLeftCoord != -1):
-		leftCoord = waypoints.FindLeftWaypoints((bottomLeftCoord), (topLeftCoord), crop)
+		leftCoord = patrol.FindLeftWaypoints((bottomLeftCoord), (topLeftCoord), crop)
 		if (leftCoord != -1):
 			patrolPath[5:5] = [leftCoord]
 			TotalCoords += 1
@@ -90,7 +91,7 @@ if __name__ == '__main__':
 		print "[E] - left Midpoints Coord Not Calculated, Dependency Missing"
 
 	if (topRightCoord != -1 and topLeftCoord != -1):
-		topCoord = waypoints.FindTopWaypoints((topLeftCoord), (topRightCoord), crop)
+		topCoord = patrol.FindTopWaypoints((topLeftCoord), (topRightCoord), crop)
 		if (topCoord != -1):
 			patrolPath[7:7] = [topCoord]
 			TotalCoords += 1
@@ -105,18 +106,18 @@ if __name__ == '__main__':
 		print "[I] - patrol will include all" + str(TotalCoords) + "Coords"
 
 	#scale waypoints from cropped coords to image coords
-	scaledWaypoints = waypoints.ScaleWaypoints(dst, crop, thresh, patrolPath)
+	scaledWaypoints = patrol.ScaleWaypoints(dst, crop, thresh, patrolPath)
 
 	#DisplayPatrolPath(crop, patrolPath)
-	waypoints.DisplayPatrolPath(dst, scaledWaypoints)
+	patrol.DisplayPatrolPath(dst, scaledWaypoints)
 	#DisplayPatrolPath(crop, patrolPath)
 
 
 	#convert waypoints from map coords to world coords
-	convertedWaypoints = waypoints.ConvertToWorldCoords(scaledWaypoints, dst)
+	convertedWaypoints = patrol.ConvertToWorldCoords(scaledWaypoints, dst)
 
 	cv2.imshow('Display_Window', dst)
 	cv2.waitKey(0)
 
 	#start state machine publishing waypoints
-	waypoints.PatrolStateMachine(convertedWaypoints)
+	patrol.PatrolStateMachine(convertedWaypoints)
